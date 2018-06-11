@@ -1,0 +1,60 @@
+body {
+    font-family: "sans-serif";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+table {
+    width: 100%;
+    height: 100%;
+}
+
+td {
+    width: 1em;
+    text-align: center;
+    padding: 5px;
+    cursor: pointer;
+}
+
+#output {
+    font-size: 1.1em;
+    padding: 5px;
+    text-align: center;
+}
+
+#input {
+    padding-top: 5px;
+}
+
+.coords:hover {
+    background-color: lightgoldenrodyellow;
+}
+
+.missed:hover {
+    background-color: lightcoral;
+}
+
+.hit:hover {
+    background-color: lightgreen;
+}
+
+#gameFinished{
+    text-align: center;
+    -webkit-animation-name: glow;
+    -webkit-animation-duration: 3s;
+    -webkit-animation-iteration-count: infinite;
+}
+
+/* Chrome, Safari, Opera}*/
+@-webkit-keyframes glow {
+    from {
+        color: white;
+    }
+    to {
+        color: green;
+    }
+}
+

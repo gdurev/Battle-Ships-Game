@@ -2,160 +2,205 @@
 //BattleShips => {TechHuddle}
 //***************************
 
-const   rows = 10,
-        cols = 10,
-        noShotValue = "&sdot;",
-        missValue = "&mdash;",
-        hitValue = "X";
+const   //Table dimensions
+        T_ROWS = 10,
+        T_COLUMNS = 10,
 
+        //Shot html values
+        SHOT_NONE_VALUE = "&sdot;",
+        SHOT_MISS_VALUE = "&mdash;",
+        SHOT_HIT_VALUE = "X",
+
+        //Position values
+        POS_EMPTY = 0,
+        POS_HIT = 1,
+        POS_MISSED_ALREADY = 2,
+        POS_HIT_ALREADY = 3,
+
+        //Orientations
+        OR_HORIZONTAL = "horizontal",
+        OR_VERTICAL = "vertical",
+
+        //HTML IDs & Classes
+        ID_HEADER = "cellsHeader",
+        ID_TABLE = "container",
+        ID_FINISH = "gameFinished",
+        CLASS_COORDINATES = "coords",
+        CLASS_HIT = "hit",
+        CLASS_MISSED = "missed",
+        ID_COORDINATES_INPUT = "inputCoord",
+        ID_OUTPUT = "output",
+        ID_SUBMIT = "submit",
+
+        //Output messages
+        ALERT_FINISHED = "Game finished already !!!",
+        OUTPUT_MISSED = "*** Miss ***",
+        OUTPUT_HIT = "*** HIT ***",
+        OUTPUT_MISSED_ALREADY = "*** Missed already ***",
+        OUTPUT_SUNK = "*** SUNK ***",
+        OUTPUT_HIT_ALREADY = "*** Hit already ***",
+        OUTPUT_ERROR = "*** Error ***";
 
 let battleShips = [
         Battleship = {
+            count: 1,
             length: 5,
             orientation: "",
             row: 0,
             column: 0
         },
         Destroyer = {
+            count: 2,
             length: 4,
             orientation: "",
             row: 0,
             column: 0
         },
-        Destroyer = {
-            length: 4,
-            orientation: "",
-            row: 0,
-            column: 0
-        }
     ],
     shipsPos = [],
-    overlap = 0,
-    temp = [],
+
+    //Stats
     shotsFired = 0,
     shipsCount = 0,
     shipsSunk = 0,
     gameFinished = 0;
 
-const tableArr = createTArray(rows, cols);
+    const tableArr = createTArray(),
 
-//Generate ships in array
-Object.keys(battleShips).forEach((ship) => {
-    ship = battleShips[ship];
+          //Console output as per spec
+          show = shipsTo2Dtext();
 
-    //update ships count
-    shipsCount += 1;
+//Create Array table and populate ships
+function createTArray() {
+    const table = Array(T_ROWS).fill(0).map(() => Array(T_COLUMNS).fill(0));
 
-    //Generate individual orientation
-    ship.orientation = setOrientation();
+    //Populate ships in array
+    let overlap,
+        temp;
 
-    if (ship.orientation === "horizontal") {
-        do {
-            //Generate initial coordinates
-            ship.column = (setStart(cols - ship.length));
-            ship.row = setStart(rows);
+    Object.keys(battleShips).forEach((ship) => {
+        ship = battleShips[ship];
 
-            //Check for overlapping
-            overlap = 0;
-            for (let c = 0; c < ship.length; c++) {
-                if (tableArr[ship.row - 1][ship.column + c - 1] === 1) {
-                    overlap = 1;
+        for (let i = 0; i < ship.count; i++) {
+            //update ships count
+            shipsCount += 1;
+
+            //Generate individual orientation
+            ship.orientation = setOrientation();
+
+            if (ship.orientation === OR_HORIZONTAL) {
+                do {
+                    //Generate initial coordinates
+                    ship.column = (setStart(T_COLUMNS - ship.length));
+                    ship.row = setStart(T_ROWS);
+
+                    //Check for overlapping
+                    overlap = 0;
+                    for (let c = 0; c < ship.length; c++) {
+                        if (table[ship.row - 1][ship.column + c - 1] === 1) {
+                            overlap = 1;
+                        }
+                    }
+                } while (overlap === 1);
+
+                //Set values to array
+                temp = [];
+                for (let c = 0; c < ship.length; c++) {
+                    table[ship.row - 1][ship.column + c - 1] = 1;
+
+                    temp.push(indexToChar(ship.row - 1) + (ship.column + c));
                 }
-            }
-        } while (overlap === 1);
 
-        //Set values to array
-        temp = [];
-        for(let c = 0; c < ship.length; c++){
-            tableArr[ship.row - 1][ship.column + c - 1] = 1;
-            temp.push(indexToChar(ship.row - 1) + (ship.column + c));
-        }
+                shipsPos.push(temp);
+            } else { //vertical
+                do {
+                    //Generate initial coordinates
+                    ship.row = (setStart(T_ROWS - ship.length));
+                    ship.column = setStart(T_COLUMNS);
 
-        shipsPos.push(temp);
-    } else { //vertical
-        do {
-            //Generate initial coordinates
-            ship.row = (setStart(rows - ship.length));
-            ship.column = setStart(cols);
+                    //Check for overlapping
+                    overlap = 0;
+                    for (let c = 0; c < ship.length; c++) {
+                        if (table[ship.row + c - 1][ship.column - 1] === 1) {
+                            overlap = 1;
+                        }
+                    }
+                } while (overlap === 1);
 
-            //Check for overlapping
-            overlap = 0;
-            for (let c = 0; c < ship.length; c++) {
-                if (tableArr[ship.row + c - 1][ship.column - 1] === 1) {
-                    overlap = 1;
+                //Set values
+                temp = [];
+                for (let c = 0; c < ship.length; c++) {
+                    table[ship.row + c - 1][ship.column - 1] = 1;
+                    temp.push(indexToChar(ship.row + c - 1) + (ship.column));
                 }
+                shipsPos.push(temp);
             }
-        } while (overlap === 1);
-
-        //Set values
-        temp = [];
-        for(let c = 0; c < ship.length; c++){
-            tableArr[ship.row + c - 1][ship.column - 1] = 1;
-            temp.push(indexToChar(ship.row + c - 1 ) + (ship.column));
         }
-        shipsPos.push(temp);
+    });
 
-    }
-});
+    generateHTMLtable();
 
-//Create html table
-const table = document.createElement("table");
-
-for(let i = 0; i < tableArr.length; i++){
-    const row = table.insertRow(i);
-
-    //Create row columns
-    for(let y = 0; y < tableArr[i].length; y++){
-        const cell = row.insertCell(y);
-
-        cell.innerHTML = noShotValue;
-        cell.id = indexToChar(i) + (y  + 1);
-        cell.className = "coords"
-    }
-
-    //Put first column letters
-    const headerCell = row.insertCell(0);
-    headerCell.innerHTML = indexToChar(i);
-    headerCell.id = "cellsHeader";
+    return table;
 }
 
-//Put row header numbers
-const headerRow = table.insertRow(0);
-for(let i = 0; i < cols + 1; i ++){
-    const cell = headerRow.insertCell(i);
-    if(i !== 0) {
-        cell.innerHTML = i;
-        cell.id = "cellsHeader";
+function generateHTMLtable(){
+    //Create html table
+    const table = document.createElement("table");
+
+    for(let i = 0; i <= T_ROWS; i++) {
+
+        const row = table.insertRow(i);
+
+        //Create row columns
+        for (let y = 0; y <= T_COLUMNS; y++) {
+            if (i === 0 && y !== 0) {
+                //Insert Columns Index
+                const cell = row.insertCell(0);
+
+                cell.innerHTML = T_COLUMNS - y + 1; //Index numbers in reversed order
+                cell.id = ID_HEADER;
+            } else if (y !== 0) {
+                //Fill Columns Cells
+                const cell = row.insertCell(y - 1);
+
+                cell.innerHTML = SHOT_NONE_VALUE;
+                cell.id = indexToChar(i - 1) + y;
+                cell.className = CLASS_COORDINATES;
+            }
+        }
+
+        if (i === 0){
+            //Inser empty cell on 1,1
+            const cell = row.insertCell(0);
+
+            cell.id = ID_HEADER;
+        } else {
+            //Put first column letters
+            const headerCell = row.insertCell(0);
+            headerCell.innerHTML = indexToChar(i - 1);
+            headerCell.id = ID_HEADER;
+        }
     }
+
+    //Fill html container
+    const gameBoardContainer = document.getElementById(ID_TABLE);
+    gameBoardContainer.appendChild(table);
+
+    return null;
 }
 
-//Fill html container
-const gameBoardContainer = document.getElementById("container");
-gameBoardContainer.appendChild(table);
-
-//Checking values on shots fired events
-document.querySelectorAll(".coords").forEach( td => {
-    td.addEventListener("click", () => { shotFired(td.id) });
-});
-
-const input = document.getElementById("input");
-input.addEventListener("submit", e => {
-    e.preventDefault();
-
-    shotFired();
-});
-
+//Check coordinates on shot fired
 function shotFired(shotCoord) {
     if(gameFinished === 1) {
-        alert("Game finished already !!!");
+        alert(ALERT_FINISHED);
         return null;
     }
-    const output = document.getElementById("output");
+    const output = document.getElementById(ID_OUTPUT);
 
     try {
         //Used with submit button?
         shotCoord === undefined ?
-            shotCoord = document.getElementById("coord").value.trim()
+            shotCoord = document.getElementById(ID_COORDINATES_INPUT).value.trim()
             : null;
 
         //fix lowerCase
@@ -163,46 +208,40 @@ function shotFired(shotCoord) {
             shotCoord = shotCoord.charAt(0).toUpperCase() + shotCoord.slice(1);
         }
 
-        let shotX = shotCoord.charAt(0).charCodeAt(0) - 65,
+        let shotX = shotCoord.charAt(0).charCodeAt(0) - 64,
             shotY = shotCoord.slice(1),
-            hitCount = "";
+            hitCount = 0;
 
         //STATS update shots fired
         shotsFired += 1;
 
         let thisCell = document.getElementById(shotCoord);
 
-        switch(tableArr[shotX][shotY - 1]) {
+        switch(tableArr[shotX - 1][shotY - 1]) {
+            case POS_EMPTY:
+                thisCell.innerHTML = SHOT_MISS_VALUE;
+                thisCell.className = CLASS_MISSED;
 
-            //Shots ID legend:
-            // 0 = Empty
-            // 1 = Ship position
-            // 2 = Already tried
-            // 3 = Hit
-
-            case 0:
-                thisCell.innerHTML = missValue;
-                thisCell.className = "missed";
-
-                output.innerHTML = "*** Miss ***";
+                output.innerHTML = OUTPUT_MISSED;
 
                 //Set table array value to Miss
-                tableArr[shotX][shotY - 1] = 2;
+                tableArr[shotX - 1][shotY - 1] = 2;
                 break;
-            case 1:
-                let text = "*** HIT ***";
+            case POS_HIT:
+                let text = OUTPUT_HIT;
 
-                thisCell.innerText = hitValue;
-                thisCell.className = "hit";
+                thisCell.innerText = SHOT_HIT_VALUE;
+                thisCell.className = CLASS_HIT;
 
                 //Set shot value to hit
-                tableArr[shotX][shotY - 1] = 3;
+                tableArr[shotX - 1][shotY - 1] = 3;
 
-                //Get array index by coordinates
-                let arrIndex = "",
+                //Check if the ship sunk
+                ////Get array index by coordinates
+                let arrIndex = null,
                     hitCount = 0;
 
-                ///get array index of ships positions table
+                ////get array index of ships positions table
                 for (let x in shipsPos) {
                     for (let y in shipsPos[x]) {
                         if (shotCoord === shipsPos[x][y]) {
@@ -210,95 +249,117 @@ function shotFired(shotCoord) {
                         }
                     }
                 }
-                ///check if the ship sunk
                 for (let x in shipsPos[arrIndex]) {
-                    document.getElementById(shipsPos[arrIndex][x]).innerHTML === hitValue ?
+                    document.getElementById(shipsPos[arrIndex][x]).innerHTML === SHOT_HIT_VALUE ?
                         hitCount += 1
                         : null;
                 }
                 if (hitCount === shipsPos[arrIndex].length) {
-                    text = "*** SUNK ***";
+                    text = OUTPUT_SUNK;
 
                     shipsSunk += 1;
 
                     //Game completed?
                     if (shipsCount === shipsSunk) {
-                        document.getElementById("gameFinished").innerHTML =
+                        document.getElementById(ID_FINISH).innerHTML =
                             "Well done! You completed the game in " + shotsFired + " shots !!!";
 
                         cleanEmptyCells();
                         gameFinished = 1;
                     }
                 }
-
                 //user output
                 output.innerHTML = text;
                 break;
-            case 2:
-                output.innerHTML = "*** Missed already ***";
+            case POS_MISSED_ALREADY:
+                output.innerHTML = OUTPUT_MISSED_ALREADY;
                 break;
-            case 3:
-                output.innerHTML = "*** Hit already ***";
+            case POS_HIT_ALREADY:
+                output.innerHTML = OUTPUT_HIT_ALREADY;
                 break;
             default:
-                output.innerHTML = "*** Error ***";
+                output.innerHTML = OUTPUT_ERROR;
         }
-
-
     }
     catch (error) {
-        output.innerHTML = "*** Error ***"
+        output.innerHTML = OUTPUT_ERROR;
     }
-
 }
 
-//Show boats as per spec
-function show() {
-    //Reveal by coordinates
-    shipsPos.map( row => {
-        row.map( cell => {
-            document.getElementById(cell).innerText = hitValue;
-        })
+//Checking values on shots fired events
+document.querySelectorAll("." + CLASS_COORDINATES).forEach( td => {
+    td.addEventListener("click", () => { shotFired(td.id) });
+});
+
+//Input box on Enter key event
+document.getElementById(ID_COORDINATES_INPUT)
+    .addEventListener("keyup", e => {
+        e.preventDefault();
+
+        if (event.keyCode === 13) {
+            document.getElementById(ID_SUBMIT).click();
+        }
     });
 
-    //Clean the rest of the table as per example
-    cleanEmptyCells();
-
-    return "You cheater!";
-}
-
-
-//Debugging
-//console.table(shipsPos);
-//console.table(tableArr);
+//On Submit button event
+document.getElementById(ID_SUBMIT)
+    .addEventListener("click", e => {
+        e.preventDefault();
+        shotFired();
+    });
 
 function cleanEmptyCells(){
-    const cleanTable = document.querySelectorAll("#container td")
+    const cleanTable = document.querySelectorAll("#" + ID_TABLE + " td")
     cleanTable.forEach( e => {
-        e.innerHTML !== hitValue && e.id !== "cellsHeader" ?
+        e.innerHTML !== SHOT_HIT_VALUE && e.id !== ID_HEADER ?
             e.innerHTML = "" : null;
     });
 }
 
-function createTArray(rows, columns) {
-    const table = Array(rows).fill(0).map(() => Array(columns).fill(0));
-
-    return table;
-}
-
-//get Char int for num
+//Get Char int for num
 function indexToChar( i ) {
     return String.fromCharCode( i + 97 ).toUpperCase();
 }
 
-//generate initial coordinates
+//Generate initial coordinates
 function setStart(max) {
     return Math.floor(1 + Math.random()*(max+1 - 1));
 }
 
-//generate orientation
+//Generate orientation
 function setOrientation() {
     const orientVar = Math.round(Math.random());
 
-    return orientVar === 0 ? orientation = "horizontal" : orientation = "vertical";
+    return orientVar === 0 ? OR_HORIZONTAL : OR_VERTICAL;
+}
+
+//Show boats as per spec
+function shipsTo2Dtext() {
+    let txt = "";
+
+    for(let i = 0; i < T_ROWS + 1; i++){
+        if(i !== 0){
+            //New line
+            txt += " \n";
+            //Row letter
+            txt += " " + indexToChar(i - 1) + "  ";
+        }
+        for(let y = 0; y < T_COLUMNS + 1; y ++){
+            if(i === 0 && y !== 0){
+                //Column number
+                txt += " " + y + " ";
+            } else if ( y === 0){   //1,1 coord empty
+                txt += "   "
+            } else {
+                //Check for ship
+                if(tableArr[i - 1][y] === 1){
+                    txt += " X ";
+                } else {
+                    txt += "   "
+                }
+            }
+        }
+    }
+
+    return txt;
 }

@@ -6,6 +6,20 @@ const   //Table dimensions
         T_ROWS = 10,
         T_COLUMNS = 10,
 
+        //Ships
+        SHIPS = [
+            {
+                name: "Destroyer",
+                length: 4,
+                count: 2
+            },
+            {
+                name : "BattleShip",
+                length: 5,
+                count: 1
+            }
+            ],
+
         //Shot html values
         SHOT_NONE_VALUE = "&sdot;",
         SHOT_MISS_VALUE = "&mdash;",
@@ -41,22 +55,7 @@ const   //Table dimensions
         OUTPUT_HIT_ALREADY = "*** Hit already ***",
         OUTPUT_ERROR = "*** Error ***";
 
-let battleShips = [
-        Battleship = {
-            count: 1,
-            length: 5,
-            orientation: "",
-            row: 0,
-            column: 0
-        },
-        Destroyer = {
-            count: 2,
-            length: 4,
-            orientation: "",
-            row: 0,
-            column: 0
-        },
-    ],
+let battleShips = createShips(),
     shipsPos = [],
 
     //Stats
@@ -65,10 +64,37 @@ let battleShips = [
     shipsSunk = 0,
     gameFinished = 0;
 
-    const tableArr = createTArray(),
+const tableArr = createTArray(),
 
-          //Console output as per spec
-          show = shipsTo2Dtext();
+      //Console output as per spec
+      show = shipsTo2Dtext();
+
+//Generate ship object in array
+function createShips(){
+    let shipsArr = [],
+        idCount = 0;
+
+    SHIPS.forEach( ship => {
+        let temp = []    
+
+        for(let i = 0; i < ship.count; i++){
+            idCount += 1;
+
+            temp = {
+                id: idCount,
+                name: ship.name,
+                length: ship.length,
+                orientation: "",
+                row: 0,
+                column: 0
+            };
+
+            shipsArr.push(temp);
+        }
+    }); 
+
+    return shipsArr;
+}
 
 //Create Array table and populate ships
 function createTArray() {
@@ -78,63 +104,61 @@ function createTArray() {
     let overlap,
         temp;
 
-    Object.keys(battleShips).forEach((ship) => {
+    Object.keys(battleShips).forEach( ship => {
         ship = battleShips[ship];
 
-        for (let i = 0; i < ship.count; i++) {
-            //update ships count
-            shipsCount += 1;
+        //update ships count
+        shipsCount += 1;
 
-            //Generate individual orientation
-            ship.orientation = setOrientation();
+        //Generate individual orientation
+        ship.orientation = setOrientation();
 
-            if (ship.orientation === OR_HORIZONTAL) {
-                do {
-                    //Generate initial coordinates
-                    ship.column = (setStart(T_COLUMNS - ship.length));
-                    ship.row = setStart(T_ROWS);
+        if (ship.orientation === OR_HORIZONTAL) {
+            do {
+                //Generate initial coordinates
+                ship.column = (setStart(T_COLUMNS - ship.length));
+                ship.row = setStart(T_ROWS);
 
-                    //Check for overlapping
-                    overlap = 0;
-                    for (let c = 0; c < ship.length; c++) {
-                        if (table[ship.row - 1][ship.column + c - 1] === 1) {
-                            overlap = 1;
-                        }
-                    }
-                } while (overlap === 1);
-
-                //Set values to array
-                temp = [];
+                //Check for overlapping
+                overlap = 0;
                 for (let c = 0; c < ship.length; c++) {
-                    table[ship.row - 1][ship.column + c - 1] = 1;
-
-                    temp.push(indexToChar(ship.row - 1) + (ship.column + c));
-                }
-
-                shipsPos.push(temp);
-            } else { //vertical
-                do {
-                    //Generate initial coordinates
-                    ship.row = (setStart(T_ROWS - ship.length));
-                    ship.column = setStart(T_COLUMNS);
-
-                    //Check for overlapping
-                    overlap = 0;
-                    for (let c = 0; c < ship.length; c++) {
-                        if (table[ship.row + c - 1][ship.column - 1] === 1) {
-                            overlap = 1;
-                        }
+                    if (table[ship.row - 1][ship.column + c - 1] === 1) {
+                        overlap = 1;
                     }
-                } while (overlap === 1);
-
-                //Set values
-                temp = [];
-                for (let c = 0; c < ship.length; c++) {
-                    table[ship.row + c - 1][ship.column - 1] = 1;
-                    temp.push(indexToChar(ship.row + c - 1) + (ship.column));
                 }
-                shipsPos.push(temp);
+            } while (overlap === 1);
+
+            //Set values to array
+            temp = [];
+            for (let c = 0; c < ship.length; c++) {
+                table[ship.row - 1][ship.column + c - 1] = 1;
+
+                temp.push(indexToChar(ship.row - 1) + (ship.column + c));
             }
+
+            shipsPos.push(temp);
+        } else { //vertical
+            do {
+                //Generate initial coordinates
+                ship.row = (setStart(T_ROWS - ship.length));
+                ship.column = setStart(T_COLUMNS);
+
+                //Check for overlapping
+                overlap = 0;
+                for (let c = 0; c < ship.length; c++) {
+                    if (table[ship.row + c - 1][ship.column - 1] === 1) {
+                        overlap = 1;
+                    }
+                }
+            } while (overlap === 1);
+
+            //Set values
+            temp = [];
+            for (let c = 0; c < ship.length; c++) {
+                table[ship.row + c - 1][ship.column - 1] = 1;
+                temp.push(indexToChar(ship.row + c - 1) + (ship.column));
+            }
+            shipsPos.push(temp);
         }
     });
 

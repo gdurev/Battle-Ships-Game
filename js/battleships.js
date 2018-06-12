@@ -75,7 +75,7 @@ function createShips(){
         idCount = 0;
 
     SHIPS.forEach( ship => {
-        let temp = []    
+        let temp = [];
 
         for(let i = 0; i < ship.count; i++){
             idCount += 1;
@@ -364,19 +364,17 @@ function shipsTo2Dtext() {
     for(let i = 0; i < T_ROWS + 1; i++){
         if(i !== 0){
             //New line
-            txt += " \n";
+            txt += "\n";
             //Row letter
-            txt += " " + indexToChar(i - 1) + "  ";
+            txt += indexToChar(i - 1);
         }
         for(let y = 0; y < T_COLUMNS + 1; y ++){
             if(i === 0 && y !== 0){
                 //Column number
                 txt += " " + y + " ";
-            } else if ( y === 0){   //1,1 coord empty
-                txt += "   "
-            } else {
+            } else if (y !== 0){
                 //Check for ship
-                if(tableArr[i - 1][y] === 1){
+                if(tableArr[i - 1][y - 1] === 1){
                     txt += " X ";
                 } else {
                     txt += "   "

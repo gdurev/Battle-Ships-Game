@@ -1,6 +1,3 @@
-//***************************
-//BattleShips => {TechHuddle}
-//***************************
 
 const   //Table dimensions
         T_ROWS = 10,
